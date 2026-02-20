@@ -36,7 +36,8 @@ async function main() {
   console.log(`OpenCode Server: ${config.opencode.serverUrl}`);
 
   const dbManager = new DatabaseManager(config.database.path);
-  const db = dbManager.getDatabase();
+  await dbManager.init();
+  const db = dbManager.getDb();
 
   const botCore = new BotCore(db);
 
