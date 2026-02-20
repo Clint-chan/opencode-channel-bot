@@ -11,7 +11,6 @@ export class TelegramAdapter extends BaseChannelAdapter {
 
   async start() {
     this.setupCommands();
-    this.setupEventSubscription();
     await this.bot.launch();
     console.log('🚀 Telegram adapter started');
 
@@ -399,18 +398,30 @@ export class TelegramAdapter extends BaseChannelAdapter {
       }
 
       try {
-        const status = await this.opencode.getSessionStatus(session.opencode_session_id);
+        const sessionData = await this.opencode.getSessionStatus(session.opencode_session_id);
+        
+        const statusText = this.formatSessionStatus(task, sessionData);
+        const isCompleted = this.isSessionCompleted(sessionData);
+        
+        if (isCompleted) {
+          this.botCore.taskManager.updateTaskStatus(task.id, 'completed');
+        }
+        
+        const buttons = isCompleted 
+          ? [] 
+          : [
+              [Markup.button.callback('🔄 Refresh', `refresh_${task.id}`)],
+              [Markup.button.callback('⏹️ Abort', `abort_${session.opencode_session_id}`)]
+            ];
         
         await ctx.editMessageText(
-          `🔄 Task Status\n\n📝 Task: ${task.task_text}\n📊 Status: ${status.status || task.status}\n\n⏱️ Last updated: ${new Date().toLocaleTimeString()}`,
-          Markup.inlineKeyboard([
-            [Markup.button.callback('🔄 Refresh', `refresh_${task.id}`)],
-            [Markup.button.callback('⏹️ Abort', `abort_${session.opencode_session_id}`)]
-          ])
+          statusText,
+          buttons.length > 0 ? Markup.inlineKeyboard(buttons) : undefined
         );
         
         await ctx.answerCbQuery('✅ Refreshed');
       } catch (error) {
+        console.error('Failed to refresh status:', error);
         await ctx.answerCbQuery(`❌ ${error.message}`);
       }
       
@@ -424,113 +435,6 @@ export class TelegramAdapter extends BaseChannelAdapter {
       } catch (error) {
         await ctx.answerCbQuery(`❌ ${error.message}`);
       }
-    }
-  }
-
-  setupEventSubscription() {
-    try {
-      this.opencode.subscribeToEvents(async (event) => {
-        await this.handleOpenCodeEvent(event);
-      });
-      console.log('✅ SSE event subscription established');
-    } catch (error) {
-      console.warn('⚠️  SSE event subscription failed (non-critical):', error.message);
-      console.warn('   Bot will work without real-time notifications');
-    }
-  }
-
-  async handleOpenCodeEvent(event) {
-    console.log('Received OpenCode event:', event.type, event.sessionId);
-
-    try {
-      // Query to get chatId through session -> project -> user chain
-      const sessionData = this.botCore.sessionManager.sessionRepo.db.prepare(`
-        SELECT 
-          s.id as session_id,
-          s.opencode_session_id,
-          p.id as project_id,
-          p.user_id,
-          u.channel,
-          u.channel_user_id as chat_id
-        FROM sessions s
-        JOIN projects p ON s.project_id = p.id
-        JOIN users u ON p.user_id = u.id
-        WHERE s.opencode_session_id = ? AND u.channel = 'telegram'
-      `).all(event.sessionId);
-
-      if (!sessionData || sessionData.length === 0) {
-        console.log('No Telegram session found for OpenCode session:', event.sessionId);
-        return;
-      }
-
-      for (const data of sessionData) {
-        const chatId = data.chat_id;
-        const tasks = this.botCore.taskManager.taskRepo.findBySessionId(data.session_id);
-        const latestTask = tasks[0];
-
-        if (!latestTask) continue;
-
-        if (event.type === 'session.idle') {
-          this.botCore.taskManager.updateTaskStatus(latestTask.id, 'completed');
-          this.botCore.messageManager.createMessage(data.session_id, 'assistant', 'Task completed', null);
-
-          if (latestTask.telegram_message_id && chatId) {
-            await this.bot.telegram.sendMessage(
-              chatId,
-              `✅ Task completed!\n\n📝 Task: ${latestTask.task_text}`
-            ).catch((err) => {
-              console.error('Failed to send completion message:', err);
-            });
-
-            await this.bot.telegram.editMessageReplyMarkup(
-              chatId,
-              latestTask.telegram_message_id,
-              null,
-              { inline_keyboard: [] }
-            ).catch((err) => {
-              console.error('Failed to edit message markup:', err);
-            });
-          }
-
-        } else if (event.type === 'session.error') {
-          this.botCore.taskManager.updateTaskStatus(
-            latestTask.id,
-            'error',
-            null,
-            null,
-            event.error || 'Unknown error'
-          );
-
-          if (latestTask.telegram_message_id && chatId) {
-            await this.bot.telegram.sendMessage(
-              chatId,
-              `❌ Task failed\n\n📝 Task: ${latestTask.task_text}\n⚠️ Error: ${event.error || 'Unknown error'}`
-            ).catch((err) => {
-              console.error('Failed to send error message:', err);
-            });
-          }
-
-        } else if (event.type === 'session.status' && event.status) {
-          this.botCore.taskManager.updateTaskStatus(latestTask.id, 'running', event.status);
-
-          if (latestTask.telegram_message_id && chatId) {
-            await this.bot.telegram.editMessageText(
-              chatId,
-              latestTask.telegram_message_id,
-              null,
-              `🔄 Task in progress\n\n📝 Task: ${latestTask.task_text}\n📊 Status: ${event.status}`,
-              Markup.inlineKeyboard([
-                [Markup.button.callback('🔄 Refresh', `refresh_${latestTask.id}`)],
-                [Markup.button.callback('⏹️ Abort', `abort_${data.opencode_session_id}`)]
-              ])
-            ).catch((err) => {
-              console.error('Failed to edit message text:', err);
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to handle OpenCode event:', error);
     }
   }
 
@@ -612,5 +516,58 @@ export class TelegramAdapter extends BaseChannelAdapter {
 
   async deleteMessage(userId, messageId) {
     return await this.bot.telegram.deleteMessage(userId, messageId);
+  }
+
+  formatSessionStatus(task, sessionData) {
+    const timestamp = new Date().toLocaleTimeString();
+    let statusEmoji = '🔄';
+    let statusText = 'Running';
+    
+    if (this.isSessionCompleted(sessionData)) {
+      statusEmoji = '✅';
+      statusText = 'Completed';
+    } else if (sessionData.error) {
+      statusEmoji = '❌';
+      statusText = 'Error';
+    }
+    
+    let message = `${statusEmoji} Task Status\n\n`;
+    message += `📝 Task: ${task.task_text}\n`;
+    message += `📊 Status: ${statusText}\n`;
+    
+    if (sessionData.messages && sessionData.messages.length > 0) {
+      const lastMessage = sessionData.messages[sessionData.messages.length - 1];
+      if (lastMessage.role === 'assistant' && lastMessage.content) {
+        const preview = lastMessage.content.substring(0, 200);
+        message += `\n💬 Latest response:\n${preview}${lastMessage.content.length > 200 ? '...' : ''}\n`;
+      }
+    }
+    
+    if (sessionData.error) {
+      message += `\n⚠️ Error: ${sessionData.error}\n`;
+    }
+    
+    message += `\n⏱️ Last updated: ${timestamp}`;
+    
+    return message;
+  }
+
+  isSessionCompleted(sessionData) {
+    if (sessionData.status === 'completed' || sessionData.status === 'idle') {
+      return true;
+    }
+    
+    if (sessionData.finishedAt || sessionData.finished_at) {
+      return true;
+    }
+    
+    if (sessionData.messages && sessionData.messages.length > 0) {
+      const lastMessage = sessionData.messages[sessionData.messages.length - 1];
+      if (lastMessage.role === 'assistant' && lastMessage.finishedAt) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }
