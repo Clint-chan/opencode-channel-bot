@@ -61,25 +61,40 @@ cd opencode-channel-bot
 npm install
 ```
 
-#### 4. 启动 OpenCode Server
+#### 4. 配置并启动 OpenCode Server
 
 **前提条件**：你应该已经全局安装了 `opencode-ai`。
+
+**步骤 1：设置 OpenCode Server 密码**
+
+生成一个安全密码并添加到 shell 配置：
+
+```bash
+# 生成随机密码
+PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | head -c 32)
+
+# 添加到 shell 配置文件（~/.bashrc 或 ~/.zshrc）
+echo "export OPENCODE_SERVER_PASSWORD=\"$PASSWORD\"" >> ~/.bashrc
+
+# 重新加载配置
+source ~/.bashrc
+
+# 显示密码（保存此密码，步骤 5 需要用到）
+echo "你的 OpenCode Server 密码: $OPENCODE_SERVER_PASSWORD"
+```
+
+**步骤 2：启动 OpenCode Server**
 
 在单独的终端中启动 OpenCode Server：
 
 ```bash
-# 启动 OpenCode Server（本地开发使用非安全模式）
+# 启动带密码保护的 OpenCode Server
 opencode serve --port 4096
 
-# 服务器会显示：
-# Warning: OPENCODE_SERVER_PASSWORD is not set; server is unsecured.
-# opencode server listening on http://127.0.0.1:4096
+# 服务器会在 http://127.0.0.1:4096 启动
 ```
 
-**重要说明**：
-- 保持这个终端运行。Bot 需要 OpenCode Server 处于活跃状态。
-- 对于本地开发，非安全模式（无密码）是可以接受的，因为服务器只绑定到 `127.0.0.1`。
-- 对于生产部署，设置 `OPENCODE_SERVER_PASSWORD` 环境变量来保护服务器。
+**重要**：保持这个终端运行。Bot 需要 OpenCode Server 处于活跃状态。
 
 #### 5. 运行设置向导（推荐）
 
@@ -91,8 +106,8 @@ npm run setup
 - **Telegram Bot Token**：从 @BotFather 获取的 token
 - **允许的 Chat ID**：从 @userinfobot 获取的 Chat ID（多个用户用逗号分隔）
 - **OpenCode Server URL**：使用默认值 `http://127.0.0.1:4096`（按回车）
-- **OpenCode Server Username**：使用默认值 `admin`（按回车，非安全模式下不使用）
-- **OpenCode Server Password**：非安全模式留空（按回车）
+- **OpenCode Server Username**：使用默认值 `admin`（按回车）
+- **OpenCode Server Password**：输入步骤 4 生成的密码（`echo $OPENCODE_SERVER_PASSWORD`）
 - **数据库路径**：使用默认值 `./data/bot.db`（按回车）
 - **日志级别**：使用默认值 `info`（按回车）
 
@@ -112,7 +127,7 @@ ALLOWED_CHAT_IDS=123456789,987654321
 
 # OpenCode Server 配置
 OPENCODE_SERVER_URL=http://127.0.0.1:4096
-OPENCODE_SERVER_PASSWORD=
+OPENCODE_SERVER_PASSWORD=X17SP4mgYPpOfkM0qtW4rtN6zPTO6fjy
 OPENCODE_SERVER_USERNAME=admin
 
 # 数据库配置
@@ -122,7 +137,7 @@ DATABASE_PATH=./data/bot.db
 LOG_LEVEL=info
 ```
 
-**注意**：本地开发时 `OPENCODE_SERVER_PASSWORD` 留空（非安全模式）。
+**注意**：使用步骤 4 中生成的密码。
 
 #### 6. 启动 Bot
 
