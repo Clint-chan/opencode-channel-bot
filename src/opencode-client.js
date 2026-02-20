@@ -123,6 +123,14 @@ export class OpenCodeClient {
     };
 
     this.eventSource.onerror = (error) => {
+      // Check if it's an authentication error
+      if (error.status === 401) {
+        console.warn('⚠️  SSE authentication failed. Disabling real-time notifications.');
+        console.warn('   Bot will continue to work, but you need to manually refresh status.');
+        this.closeEventStream();
+        return; // Don't reconnect on auth errors
+      }
+
       console.error('SSE connection error:', error);
       this.closeEventStream();
       

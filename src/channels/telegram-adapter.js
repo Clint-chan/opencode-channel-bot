@@ -428,9 +428,15 @@ export class TelegramAdapter extends BaseChannelAdapter {
   }
 
   setupEventSubscription() {
-    this.opencode.subscribeToEvents(async (event) => {
-      await this.handleOpenCodeEvent(event);
-    });
+    try {
+      this.opencode.subscribeToEvents(async (event) => {
+        await this.handleOpenCodeEvent(event);
+      });
+      console.log('✅ SSE event subscription established');
+    } catch (error) {
+      console.warn('⚠️  SSE event subscription failed (non-critical):', error.message);
+      console.warn('   Bot will work without real-time notifications');
+    }
   }
 
   async handleOpenCodeEvent(event) {
