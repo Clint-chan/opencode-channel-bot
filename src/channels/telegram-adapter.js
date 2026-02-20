@@ -36,7 +36,7 @@ export class TelegramAdapter extends BaseChannelAdapter {
       const botInfo = await this.bot.telegram.getMe();
       console.log(`✅ Connected as @${botInfo.username}`);
       
-      await this.bot.launch({
+      this.bot.launch({
         dropPendingUpdates: true
       });
       
