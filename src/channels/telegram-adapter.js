@@ -70,8 +70,20 @@ export class TelegramAdapter extends BaseChannelAdapter {
   }
 
   setupCommands() {
+    this.bot.use(async (ctx, next) => {
+      console.log('📨 Received update:', {
+        type: ctx.updateType,
+        from: ctx.from?.id,
+        chat: ctx.chat?.id,
+        text: ctx.message?.text
+      });
+      await next();
+    });
+
     this.bot.command('start', async (ctx) => {
+      console.log('🎯 /start command received from:', ctx.from.id);
       if (!this.isAuthorized(ctx)) {
+        console.log('❌ Unauthorized:', ctx.from.id, 'not in', this.config.telegram.allowedChatIds);
         return ctx.reply('❌ Unauthorized access');
       }
 
