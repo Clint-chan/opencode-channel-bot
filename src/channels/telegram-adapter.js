@@ -1,11 +1,28 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BaseChannelAdapter } from './base-adapter.js';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 export class TelegramAdapter extends BaseChannelAdapter {
   constructor(botCore, config, opencodeClient) {
     super(botCore);
     this.config = config;
-    this.bot = new Telegraf(config.telegram.botToken);
+    
+    const botOptions = {
+      telegram: {}
+    };
+    
+    if (config.telegram.proxyUrl) {
+      const proxyUrl = config.telegram.proxyUrl;
+      if (proxyUrl.startsWith('socks')) {
+        botOptions.telegram.agent = new SocksProxyAgent(proxyUrl);
+      } else {
+        botOptions.telegram.agent = new HttpsProxyAgent(proxyUrl);
+      }
+      console.log(`📡 Using proxy: ${proxyUrl}`);
+    }
+    
+    this.bot = new Telegraf(config.telegram.botToken, botOptions);
     this.opencode = opencodeClient;
   }
 

@@ -11,11 +11,12 @@ export const config = {
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
     allowedChatIds: process.env.ALLOWED_CHAT_IDS?.split(',').map(id => id.trim()) || [],
+    proxyUrl: process.env.TELEGRAM_PROXY_URL,
   },
   
   opencode: {
     serverUrl: process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096',
-    password: process.env.OPENCODE_SERVER_PASSWORD,
+    password: process.env.OPENCODE_SERVER_PASSWORD || '',
     username: process.env.OPENCODE_SERVER_USERNAME || 'admin',
   },
   
@@ -37,10 +38,6 @@ export function validateConfig() {
   
   if (config.telegram.allowedChatIds.length === 0) {
     errors.push('ALLOWED_CHAT_IDS is required (comma-separated chat IDs)');
-  }
-  
-  if (!config.opencode.password) {
-    errors.push('OPENCODE_SERVER_PASSWORD is required');
   }
   
   if (errors.length > 0) {
