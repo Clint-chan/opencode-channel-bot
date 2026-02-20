@@ -69,22 +69,25 @@ cd opencode-channel-bot
 npm install
 ```
 
-#### 4. Install and Start OpenCode Server
+#### 4. Start OpenCode Server
 
-If you haven't installed OpenCode yet:
+**Prerequisites**: You should already have `opencode-ai` installed globally.
+
+Start OpenCode Server in a separate terminal:
 
 ```bash
-# Install OpenCode (if not already installed)
-npm install -g @opencode/cli
+# Start OpenCode Server (unsecured mode for local development)
+opencode serve --port 4096
 
-# Start OpenCode Server in a separate terminal
-# Set a password for the server (remember this for step 5)
-OPENCODE_SERVER_PASSWORD=your_secure_password opencode serve
+# The server will show:
+# Warning: OPENCODE_SERVER_PASSWORD is not set; server is unsecured.
+# opencode server listening on http://127.0.0.1:4096
 ```
 
-The server will start on `http://127.0.0.1:4096` by default.
-
-**Important**: Keep this terminal running. The bot needs OpenCode Server to be active.
+**Important Notes**:
+- Keep this terminal running. The bot needs OpenCode Server to be active.
+- For local development, unsecured mode (no password) is acceptable since the server binds to `127.0.0.1` only.
+- For production deployment, set `OPENCODE_SERVER_PASSWORD` environment variable to secure the server.
 
 #### 5. Run Setup Wizard (Recommended)
 
@@ -96,8 +99,8 @@ The interactive wizard will guide you through configuring:
 - **Telegram Bot Token**: The token you got from @BotFather
 - **Allowed Chat IDs**: Your Chat ID from @userinfobot (comma-separated for multiple users)
 - **OpenCode Server URL**: Use default `http://127.0.0.1:4096` (press Enter)
-- **OpenCode Server Username**: Use default `admin` (press Enter)
-- **OpenCode Server Password**: The password you set when starting OpenCode Server
+- **OpenCode Server Username**: Use default `admin` (press Enter, not used in unsecured mode)
+- **OpenCode Server Password**: Leave empty for unsecured mode (press Enter)
 - **Database path**: Use default `./data/bot.db` (press Enter)
 - **Log level**: Use default `info` (press Enter)
 
@@ -117,7 +120,7 @@ ALLOWED_CHAT_IDS=123456789,987654321
 
 # OpenCode Server Configuration
 OPENCODE_SERVER_URL=http://127.0.0.1:4096
-OPENCODE_SERVER_PASSWORD=your_secure_password
+OPENCODE_SERVER_PASSWORD=
 OPENCODE_SERVER_USERNAME=admin
 
 # Database Configuration
@@ -126,6 +129,8 @@ DATABASE_PATH=./data/bot.db
 # Logging Configuration
 LOG_LEVEL=info
 ```
+
+**Note**: Leave `OPENCODE_SERVER_PASSWORD` empty for unsecured mode (local development).
 
 #### 6. Start Bot
 
