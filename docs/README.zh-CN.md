@@ -61,18 +61,37 @@ cd opencode-channel-bot
 npm install
 ```
 
-#### 4. 运行设置向导（推荐）
+#### 4. 安装并启动 OpenCode Server
+
+如果你还没有安装 OpenCode：
+
+```bash
+# 安装 OpenCode（如果尚未安装）
+npm install -g @opencode/cli
+
+# 在单独的终端中启动 OpenCode Server
+# 设置服务器密码（记住这个密码，步骤 5 需要用到）
+OPENCODE_SERVER_PASSWORD=your_secure_password opencode serve
+```
+
+服务器默认会在 `http://127.0.0.1:4096` 启动。
+
+**重要**：保持这个终端运行。Bot 需要 OpenCode Server 处于活跃状态。
+
+#### 5. 运行设置向导（推荐）
 
 ```bash
 npm run setup
 ```
 
 交互式向导将引导你配置：
-- Telegram Bot Token
-- 允许的 Chat ID
-- OpenCode Server URL 和凭据
-- 数据库路径
-- 日志级别
+- **Telegram Bot Token**：从 @BotFather 获取的 token
+- **允许的 Chat ID**：从 @userinfobot 获取的 Chat ID（多个用户用逗号分隔）
+- **OpenCode Server URL**：使用默认值 `http://127.0.0.1:4096`（按回车）
+- **OpenCode Server Username**：使用默认值 `admin`（按回车）
+- **OpenCode Server Password**：启动 OpenCode Server 时设置的密码
+- **数据库路径**：使用默认值 `./data/bot.db`（按回车）
+- **日志级别**：使用默认值 `info`（按回车）
 
 或者，你也可以手动创建 `.env` 文件：
 
@@ -100,18 +119,18 @@ DATABASE_PATH=./data/bot.db
 LOG_LEVEL=info
 ```
 
-#### 5. 启动 OpenCode Server
-
-```bash
-# 在另一个终端
-OPENCODE_SERVER_PASSWORD=your_secure_password opencode serve
-```
-
 #### 6. 启动 Bot
 
 ```bash
 npm start
 ```
+
+Bot 将会：
+- 连接到 OpenCode Server
+- 初始化数据库
+- 开始监听 Telegram 消息
+
+你应该会看到：`✅ Bot started successfully!`
 
 ### 方式 2：Docker Compose（推荐生产环境）
 

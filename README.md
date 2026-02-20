@@ -47,12 +47,20 @@ Production-ready multi-channel bot system for remote control of OpenCode AI assi
 
 #### 2. Get Your Chat ID
 
-```bash
-# Send any message to your bot, then visit:
-curl https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+The easiest way to get your Telegram Chat ID:
 
-# Find "chat":{"id": 123456789} in the JSON response
+1. Open Telegram and search for `@userinfobot`
+2. Start a chat with the bot
+3. Send any message
+4. The bot will reply with your User ID (this is your Chat ID)
+
+Example response:
 ```
+Id: 123456789
+First name: John
+```
+
+Use the `Id` value (123456789) as your Chat ID.
 
 #### 3. Install Dependencies
 
@@ -61,18 +69,37 @@ cd opencode-channel-bot
 npm install
 ```
 
-#### 4. Run Setup Wizard (Recommended)
+#### 4. Install and Start OpenCode Server
+
+If you haven't installed OpenCode yet:
+
+```bash
+# Install OpenCode (if not already installed)
+npm install -g @opencode/cli
+
+# Start OpenCode Server in a separate terminal
+# Set a password for the server (remember this for step 5)
+OPENCODE_SERVER_PASSWORD=your_secure_password opencode serve
+```
+
+The server will start on `http://127.0.0.1:4096` by default.
+
+**Important**: Keep this terminal running. The bot needs OpenCode Server to be active.
+
+#### 5. Run Setup Wizard (Recommended)
 
 ```bash
 npm run setup
 ```
 
 The interactive wizard will guide you through configuring:
-- Telegram Bot Token
-- Allowed Chat IDs
-- OpenCode Server URL and credentials
-- Database path
-- Log level
+- **Telegram Bot Token**: The token you got from @BotFather
+- **Allowed Chat IDs**: Your Chat ID from @userinfobot (comma-separated for multiple users)
+- **OpenCode Server URL**: Use default `http://127.0.0.1:4096` (press Enter)
+- **OpenCode Server Username**: Use default `admin` (press Enter)
+- **OpenCode Server Password**: The password you set when starting OpenCode Server
+- **Database path**: Use default `./data/bot.db` (press Enter)
+- **Log level**: Use default `info` (press Enter)
 
 Alternatively, you can manually create `.env` file:
 
@@ -100,18 +127,18 @@ DATABASE_PATH=./data/bot.db
 LOG_LEVEL=info
 ```
 
-#### 5. Start OpenCode Server
-
-```bash
-# In another terminal
-OPENCODE_SERVER_PASSWORD=your_secure_password opencode serve
-```
-
 #### 6. Start Bot
 
 ```bash
 npm start
 ```
+
+The bot will:
+- Connect to OpenCode Server
+- Initialize the database
+- Start listening for Telegram messages
+
+You should see: `✅ Bot started successfully!`
 
 ### Option 2: Docker Compose (Recommended for Production)
 
