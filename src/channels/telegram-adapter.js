@@ -36,6 +36,20 @@ export class TelegramAdapter extends BaseChannelAdapter {
       const botInfo = await this.bot.telegram.getMe();
       console.log(`✅ Connected as @${botInfo.username}`);
       
+      await this.bot.telegram.setMyCommands([
+        { command: 'start', description: 'Show welcome message and help' },
+        { command: 'addproject', description: 'Add a new project' },
+        { command: 'projects', description: 'List all projects' },
+        { command: 'use', description: 'Switch to a project' },
+        { command: 'task', description: 'Create a new task' },
+        { command: 'sessions', description: 'List sessions for current project' },
+        { command: 'new', description: 'Start a new session' },
+        { command: 'status', description: 'Check current task status' },
+        { command: 'history', description: 'View conversation history' },
+        { command: 'help', description: 'Show help information' }
+      ]);
+      console.log('✅ Bot commands menu registered');
+      
       this.bot.launch({
         dropPendingUpdates: true
       });
