@@ -11,8 +11,20 @@ export class TelegramAdapter extends BaseChannelAdapter {
 
   async start() {
     this.setupCommands();
-    await this.bot.launch();
-    console.log('🚀 Telegram adapter started');
+    console.log('🔌 Connecting to Telegram...');
+    
+    try {
+      await Promise.race([
+        this.bot.launch(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Telegram connection timeout after 30s')), 30000)
+        )
+      ]);
+      console.log('🚀 Telegram adapter started');
+    } catch (error) {
+      console.error('❌ Failed to connect to Telegram:', error.message);
+      throw error;
+    }
 
     process.once('SIGINT', () => this.stop('SIGINT'));
     process.once('SIGTERM', () => this.stop('SIGTERM'));
