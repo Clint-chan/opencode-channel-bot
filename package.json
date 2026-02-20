@@ -1,0 +1,25 @@
+{
+  "name": "opencode-channel-bot",
+  "version": "2.0.0",
+  "description": "Multi-channel bot integration for OpenCode with multi-project and session management",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js",
+    "setup": "node src/setup.js",
+    "dev": "node --watch src/main.js",
+    "test": "echo \"Integration tests pending\" && exit 0"
+  },
+  "keywords": ["opencode", "telegram", "discord", "slack", "bot", "ai", "multi-channel"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.4.5",
+    "eventsource": "^2.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

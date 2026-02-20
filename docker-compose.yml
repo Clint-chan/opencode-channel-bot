@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  opencode-server:
+    image: ghcr.io/anomalyco/opencode:latest
+    container_name: opencode-server
+    command: serve
+    environment:
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD}
+      - OPENCODE_SERVER_USERNAME=${OPENCODE_SERVER_USERNAME:-admin}
+    volumes:
+      - ./projects:/workspace
+      - opencode-data:/root/.local/share/opencode
+    ports:
+      - "127.0.0.1:4096:4096"
+    restart: unless-stopped
+    networks:
+      - opencode-network
+
+  telegram-bot:
+    build: .
+    container_name: telegram-bot
+    depends_on:
+      - opencode-server
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ALLOWED_CHAT_IDS=${ALLOWED_CHAT_IDS}
+      - OPENCODE_SERVER_URL=http://opencode-server:4096
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD}
+      - OPENCODE_SERVER_USERNAME=${OPENCODE_SERVER_USERNAME:-admin}
+      - DATABASE_PATH=/data/bot.db
+    volumes:
+      - ./data:/data
+      - ./projects:/workspace
+    restart: unless-stopped
+    networks:
+      - opencode-network
+
+volumes:
+  opencode-data:
+
+networks:
+  opencode-network:
+    driver: bridge
