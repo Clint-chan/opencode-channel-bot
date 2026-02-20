@@ -8,17 +8,19 @@ export class TelegramAdapter extends BaseChannelAdapter {
     super(botCore);
     this.config = config;
     
-    const botOptions = {
-      telegram: {}
-    };
+    const botOptions = {};
     
     if (config.telegram.proxyUrl) {
       const proxyUrl = config.telegram.proxyUrl;
+      let agent;
+      
       if (proxyUrl.startsWith('socks')) {
-        botOptions.telegram.agent = new SocksProxyAgent(proxyUrl);
+        agent = new SocksProxyAgent(proxyUrl);
       } else {
-        botOptions.telegram.agent = new HttpsProxyAgent(proxyUrl);
+        agent = new HttpsProxyAgent(proxyUrl);
       }
+      
+      botOptions.telegram = { agent };
       console.log(`📡 Using proxy: ${proxyUrl}`);
     }
     
@@ -31,15 +33,23 @@ export class TelegramAdapter extends BaseChannelAdapter {
     console.log('🔌 Connecting to Telegram...');
     
     try {
+      await this.bot.telegram.getMe();
+      console.log('✅ Telegram API connection verified');
+      
       await Promise.race([
         this.bot.launch(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Telegram connection timeout after 30s')), 30000)
+          setTimeout(() => reject(new Error('Bot launch timeout after 30s')), 30000)
         )
       ]);
       console.log('🚀 Telegram adapter started');
     } catch (error) {
       console.error('❌ Failed to connect to Telegram:', error.message);
+      if (error.code === 'ECONNREFUSED') {
+        console.error('   Proxy server refused connection');
+      } else if (error.code === 'ETIMEDOUT') {
+        console.error('   Connection timeout - check proxy address and port');
+      }
       throw error;
     }
 
